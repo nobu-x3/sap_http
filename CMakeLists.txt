@@ -142,6 +142,41 @@ elseif(SAP_HTTP_BUILD_STATIC)
     add_library(sap::http ALIAS sap_http_static)
 endif()
 
+if(SAP_HTTP_BUILD_TESTS)
+    enable_testing()
+    
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+    
+    add_executable(sap_http_tests
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/url_tests.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/headers_tests.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/request_tests.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/client_tests.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration_tests.cpp
+    )
+
+    if(SAP_HTTP_BUILD_STATIC)
+        target_link_libraries(sap_http_tests PRIVATE sap_http_static)
+    else()
+        target_link_libraries(sap_http_tests PRIVATE sap_http_shared)
+    endif()
+    
+    target_link_libraries(sap_http_tests PRIVATE 
+        GTest::gtest_main
+        GTest::gmock
+    )
+    
+    include(GoogleTest)
+    gtest_discover_tests(sap_http_tests)
+endif()
+
 if(SAP_HTTP_INSTALL)
     include(GNUInstallDirs)
     
