@@ -145,7 +145,7 @@ if(SAP_HTTP_INSTALL)
         # Install module-based targets
         if(SAP_HTTP_BUILD_SHARED)
             install(TARGETS sap_http_shared sap_core
-                EXPORT sap_http_targets
+                EXPORT sap_http_shared_targets
                 FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
                 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
                 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -155,7 +155,7 @@ if(SAP_HTTP_INSTALL)
         
         if(SAP_HTTP_BUILD_STATIC)
             install(TARGETS sap_http_static sap_core
-                EXPORT sap_http_targets
+                EXPORT sap_http_static_targets
                 FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
                 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
                 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -166,7 +166,7 @@ if(SAP_HTTP_INSTALL)
         # Install header-based targets
         if(SAP_HTTP_BUILD_SHARED)
             install(TARGETS sap_http_shared
-                EXPORT sap_http_targets
+                EXPORT sap_http_shared_targets
                 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
                 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
                 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -175,7 +175,7 @@ if(SAP_HTTP_INSTALL)
         
         if(SAP_HTTP_BUILD_STATIC)
             install(TARGETS sap_http_static
-                EXPORT sap_http_targets
+                EXPORT sap_http_static_targets
                 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
                 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
                 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -189,11 +189,20 @@ if(SAP_HTTP_INSTALL)
     endif()
     
     # Install export
-    install(EXPORT sap_http_targets
+    if(SAP_HTTP_BUILD_SHARED)
+        install(EXPORT sap_http_static_targets
+            FILE sap_http_targets.cmake
+            NAMESPACE sap::
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
+        )
+    endif()
+    if(SAP_HTTP_BUILD_STATIC)
+        install(EXPORT sap_http_shared_targets
         FILE sap_http_targets.cmake
         NAMESPACE sap::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
     )
+    endif()
     
     # Create and install config file
     include(CMakePackageConfigHelpers)
