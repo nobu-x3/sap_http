@@ -215,3 +215,13 @@ if(SAP_HTTP_INSTALL)
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
     )
 endif()
+
+message(STATUS "")
+message(STATUS "sap_http Configuration Summary:")
+message(STATUS "  Version: ${PROJECT_VERSION}")
+message(STATUS "  Use C++20 Modules: ${SAP_HTTP_USE_MODULES}")
+message(STATUS "  Build shared library: ${SAP_HTTP_BUILD_SHARED}")
+message(STATUS "  Build static library: ${SAP_HTTP_BUILD_STATIC}")
+message(STATUS "  Build tests: ${SAP_HTTP_BUILD_TESTS}")
+message(STATUS "  Install: ${SAP_HTTP_INSTALL}")
+message(STATUS "")
