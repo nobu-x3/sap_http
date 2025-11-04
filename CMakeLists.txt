@@ -37,6 +37,7 @@ set(HTTP_MODULES
 )
 
 if(SAP_HTTP_USE_MODULES)
+    add_compile_definitions(SAP_HTTP_USE_MODULES)
     # Core module library
     add_library(sap_core)
     target_sources(sap_core
@@ -51,8 +52,6 @@ if(SAP_HTTP_USE_MODULES)
         target_sources(sap_http_shared
             PUBLIC
                 FILE_SET CXX_MODULES FILES ${HTTP_MODULES}
-            PRIVATE
-                ${HTTP_SOURCES}
         )
         target_link_libraries(sap_http_shared PUBLIC sap_core)
         target_compile_features(sap_http_shared PUBLIC cxx_std_20)
