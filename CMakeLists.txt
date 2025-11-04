@@ -23,9 +23,14 @@ set(CORE_HEADERS
 )
 
 set(HTTP_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/net/http.h
 )
 
 set(HTTP_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/headers_impl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/url_impl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/request_impl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/client_impl.cpp
 )
 
 set(CORE_MODULES
