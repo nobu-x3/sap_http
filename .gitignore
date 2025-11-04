@@ -18,3 +18,4 @@ _deps/
 .vscode/
 .idea/
 *.log
+.cache
