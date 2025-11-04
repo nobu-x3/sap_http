@@ -138,3 +138,81 @@ if(SAP_HTTP_BUILD_SHARED)
 elseif(SAP_HTTP_BUILD_STATIC)
     add_library(sap::http ALIAS sap_http_static)
 endif()
+
+if(SAP_HTTP_INSTALL)
+    include(GNUInstallDirs)
+    
+    if(SAP_HTTP_USE_MODULES)
+        # Install module-based targets
+        if(SAP_HTTP_BUILD_SHARED)
+            install(TARGETS sap_http_shared sap_core
+                EXPORT sap_http_targets
+                FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            )
+        endif()
+        
+        if(SAP_HTTP_BUILD_STATIC)
+            install(TARGETS sap_http_static sap_core
+                EXPORT sap_http_targets
+                FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            )
+        endif()
+    else()
+        # Install header-based targets
+        if(SAP_HTTP_BUILD_SHARED)
+            install(TARGETS sap_http_shared
+                EXPORT sap_http_targets
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            )
+        endif()
+        
+        if(SAP_HTTP_BUILD_STATIC)
+            install(TARGETS sap_http_static
+                EXPORT sap_http_targets
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            )
+        endif()
+        
+        # Install headers
+        install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        )
+    endif()
+    
+    # Install export
+    install(EXPORT sap_http_targets
+        FILE sap_http_targets.cmake
+        NAMESPACE sap::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
+    )
+    
+    # Create and install config file
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY AnyNewerVersion
+    )
+    
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/sap_http_config.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config.cmake"
+        @ONLY
+    )
+    
+    install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
+    )
+endif()
