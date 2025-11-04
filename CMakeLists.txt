@@ -74,8 +74,6 @@ if(SAP_HTTP_USE_MODULES)
         target_sources(sap_http_static
             PUBLIC
                 FILE_SET CXX_MODULES FILES ${HTTP_MODULES}
-            PRIVATE
-                ${HTTP_SOURCES}
         )
         target_link_libraries(sap_http_static PUBLIC sap_core)
         target_compile_features(sap_http_static PUBLIC cxx_std_20)
