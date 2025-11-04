@@ -1,7 +1,7 @@
 module;
-export module core:types;
-
 #include <cstdint>
+
+export module core:types;
 
 export namespace stl {
     using u8 = std::uint8_t;

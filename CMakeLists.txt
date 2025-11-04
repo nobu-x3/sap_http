@@ -34,11 +34,13 @@ set(HTTP_SOURCES
 )
 
 set(CORE_MODULES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/core.cppm
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/types.cppm
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/result.cppm
 )
 
 set(HTTP_MODULES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/http.cppm
 )
 
 if(SAP_HTTP_USE_MODULES)
@@ -237,10 +239,10 @@ if(SAP_HTTP_INSTALL)
     endif()
     if(SAP_HTTP_BUILD_STATIC)
         install(EXPORT sap_http_shared_targets
-        FILE sap_http_targets.cmake
-        NAMESPACE sap::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
-    )
+            FILE sap_http_targets.cmake
+            NAMESPACE sap::
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
+        )
     endif()
     
     # Create and install config file
