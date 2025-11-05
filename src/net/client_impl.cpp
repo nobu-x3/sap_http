@@ -19,24 +19,44 @@ stl::result<int> Client::connect_socket(const URL &u) {
   std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
-  if (getaddrinfo(u.host.c_str(), u.port.c_str(), &hints, &res) != 0) {
-    return stl::make_error<int>("Failed to resolve host: " + u.host);
+  i32 gai_result = getaddrinfo(u.host.c_str(), u.port.c_str(), &hints, &res);
+  if (gai_result != 0) {
+#ifdef _WIN32
+    return stl::make_error<i32>("Failed to resolve host " + u.host + ": " +
+                                std::to_string(WSAGetLastError()));
+#else
+    return stl::make_error<i32>("Failed to resolve host " + u.host + ": " +
+                                std::string(gai_strerror(gai_result)));
+#endif
   }
-  int sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-  if (sock < 0) {
-    freeaddrinfo(res);
-    return stl::make_error<int>("Failed to create socket");
-  }
-  if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
-    freeaddrinfo(res);
+  i32 sock = -1;
+  struct addrinfo *rp = nullptr;
+  for (rp = res; rp != nullptr; rp = rp->ai_next) {
+    sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+    if (sock < 0) {
+      continue;
+    }
+    if (connect(sock, rp->ai_addr, rp->ai_addrlen) == 0) {
+      break;
+    }
 #ifdef _WIN32
     closesocket(sock);
 #else
     close(sock);
 #endif
-    return stl::make_error<int>("Failed to connect to host");
+    sock = -1;
   }
   freeaddrinfo(res);
+  if (sock < 0) {
+#ifdef _WIN32
+    i32 err = WSAGetLastError();
+    return stl::make_error<i32>("Failed to connect to " + u.host + ":" +
+                                u.port + " - " + std::to_string(err));
+#else
+    return stl::make_error<i32>("Failed to connect to " + u.host + ":" +
+                                u.port + " - " + std::string(strerror(errno)));
+#endif
+  }
   return sock;
 }
 
@@ -55,7 +75,7 @@ stl::result<> Client::send_request(int sock, const Request &req) {
   std::string request_str = ss.str();
   size_t sent = 0;
   while (sent < request_str.size()) {
-    int n =
+    i32 n =
         ::send(sock, request_str.c_str() + sent, request_str.size() - sent, 0);
     if (n <= 0) {
       return stl::make_error<>("Failed to send request");

@@ -57,6 +57,16 @@ TEST(RequestTest, MethodToString) {
   EXPECT_EQ(http::method_to_string(http::EMethod::OPTIONS), "OPTIONS");
 }
 
+TEST(RequestTest, StringToMethod) {
+  EXPECT_EQ(http::string_to_method("GET"), http::EMethod::GET);
+  EXPECT_EQ(http::string_to_method("POST"), http::EMethod::POST);
+  EXPECT_EQ(http::string_to_method("PUT"), http::EMethod::PUT);
+  EXPECT_EQ(http::string_to_method("DELETE"), http::EMethod::DELETE);
+  EXPECT_EQ(http::string_to_method("HEAD"), http::EMethod::HEAD);
+  EXPECT_EQ(http::string_to_method("PATCH"), http::EMethod::PATCH);
+  EXPECT_EQ(http::string_to_method("OPTIONS"), http::EMethod::OPTIONS);
+}
+
 TEST(RequestTest, DefaultHeaders) {
   auto url_result = http::URL::parse("http://example.com/api");
   ASSERT_TRUE(url_result.has_value());

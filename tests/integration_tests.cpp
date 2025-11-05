@@ -4,6 +4,7 @@ import http;
 #include "net/http.h"
 #endif
 #include <gtest/gtest.h>
+#include <iostream>
 
 TEST(IntegrationTest, HttpBinGet) {
   auto future = http::Client::get("http://httpbingo.org/get");
@@ -51,32 +52,47 @@ TEST(IntegrationTest, HttpBinHeaders) {
   EXPECT_TRUE(result.value().is_success());
 }
 
-TEST(ResponseTest, IsSuccessFor2xx) {
-  http::Response resp;
-  resp.status_code = 200;
-  EXPECT_TRUE(resp.is_success());
-
-  resp.status_code = 201;
-  EXPECT_TRUE(resp.is_success());
-
-  resp.status_code = 204;
-  EXPECT_TRUE(resp.is_success());
-
-  resp.status_code = 299;
-  EXPECT_TRUE(resp.is_success());
+TEST(IntegrationTest, ServerClientIntegration) {
+  http::ServerConfig cfg{-1, 9999};
+  http::Server server{std::move(cfg)};
+  server.route("/test", http::EMethod::GET, [](const http::ServerRequest &) {
+    return http::Response(200, "Integration test response");
+  });
+  auto start_result = server.start();
+  ASSERT_TRUE(start_result.has_value())
+      << "Server failed to start: " << start_result.error();
+  std::thread server_thread([&server]() { server.run(); });
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  auto future = http::Client::get("http://127.0.0.1:9999/test");
+  auto result = future.get();
+  server.stop();
+  server_thread.join();
+  ASSERT_TRUE(result.has_value())
+      << "Client request failed: " << result.error();
+  EXPECT_EQ(result.value().status_code, 200);
+  EXPECT_EQ(result.value().body, "Integration test response");
 }
 
-TEST(ResponseTest, IsSuccessForNon2xx) {
-  http::Response resp;
-  resp.status_code = 199;
-  EXPECT_FALSE(resp.is_success());
-
-  resp.status_code = 300;
-  EXPECT_FALSE(resp.is_success());
-
-  resp.status_code = 404;
-  EXPECT_FALSE(resp.is_success());
-
-  resp.status_code = 500;
-  EXPECT_FALSE(resp.is_success());
+TEST(IntegrationTest, ServerPostRequest) {
+  http::ServerConfig cfg{-1, 10000};
+  http::Server server{std::move(cfg)};
+  server.route("/api/echo", http::EMethod::POST,
+               [](const http::ServerRequest &req) {
+                 http::Response resp(200, req.body);
+                 resp.headers.set("Content-Type", "application/json");
+                 return resp;
+               });
+  auto start_result = server.start();
+  ASSERT_TRUE(start_result.has_value())
+      << "Server failed to start: " << start_result.error();
+  std::thread server_thread([&server]() { server.run(); });
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  auto future = http::Client::post("http://127.0.0.1:10000/api/echo",
+                                   R"({"test": "data"})");
+  auto result = future.get();
+  server.stop();
+  server_thread.join();
+  ASSERT_TRUE(result.has_value())
+      << "Client request failed: " << result.error();
+  EXPECT_EQ(result.value().body, R"({"test": "data"})");
 }

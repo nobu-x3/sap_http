@@ -32,6 +32,7 @@ set(HTTP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/request_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/client_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/response_impl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/server_impl.cpp
 )
 
 set(CORE_MODULES
@@ -161,7 +162,9 @@ if(SAP_HTTP_BUILD_TESTS)
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/url_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/headers_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/request_tests.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/response_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/client_tests.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/server_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration_tests.cpp
     )
 
