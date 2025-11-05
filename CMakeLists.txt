@@ -31,6 +31,7 @@ set(HTTP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/url_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/request_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/client_impl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/response_impl.cpp
 )
 
 set(CORE_MODULES

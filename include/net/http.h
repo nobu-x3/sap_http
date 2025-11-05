@@ -63,8 +63,9 @@ struct Response {
     std::string status_text;
     Headers headers;
     std::string body;
-
-    bool is_success() const { return status_code >= 200 && status_code < 300; }
+    Response() = default;
+	Response(i32 code, std::string body_content = "");
+    inline bool is_success() const { return status_code >= 200 && status_code < 300; }
 };
 
 class Client {
