@@ -1,10 +1,5 @@
-#ifdef SAP_HTTP_USE_MODULES
-import http;
-#else
 #include "net/http.h"
-#endif
 #include <gtest/gtest.h>
-#include <iostream>
 
 TEST(IntegrationTest, HttpBinGet) {
   auto future = http::Client::get("http://httpbingo.org/get");

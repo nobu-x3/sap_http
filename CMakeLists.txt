@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 project(sap_http VERSION 1.0.0 LANGUAGES CXX)
 
-# C++20 required for modules
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -11,7 +10,6 @@ option(SAP_HTTP_BUILD_SHARED "Build shared library" ON)
 option(SAP_HTTP_BUILD_STATIC "Build static library" ON)
 option(SAP_HTTP_BUILD_TESTS "Build tests" ON)
 option(SAP_HTTP_INSTALL "Install library" ON)
-option(SAP_HTTP_USE_MODULES "Use C++20 modules (requires compiler support)" ON)
 
 if(WIN32)
     add_compile_definitions(_WIN32_WINNT=0x0601)
@@ -27,78 +25,14 @@ set(HTTP_HEADERS
 )
 
 set(HTTP_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/headers_impl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/url_impl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/request_impl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/client_impl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/response_impl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/server_impl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/headers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/url.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/request.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/client.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/response.cpp
 )
 
-set(CORE_MODULES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/core.cppm
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/types.cppm
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/result.cppm
-)
-
-set(HTTP_MODULES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/http.cppm
-)
-
-if(SAP_HTTP_USE_MODULES)
-    add_compile_definitions(SAP_HTTP_USE_MODULES)
-    # Core module library
-    add_library(sap_core)
-    target_sources(sap_core
-        PUBLIC
-            FILE_SET CXX_MODULES FILES ${CORE_MODULES}
-    )
-    target_compile_features(sap_core PUBLIC cxx_std_20)
-    
-    # Shared library with modules
-    if(SAP_HTTP_BUILD_SHARED)
-        add_library(sap_http_shared SHARED)
-        target_sources(sap_http_shared
-            PUBLIC
-                FILE_SET CXX_MODULES FILES ${HTTP_MODULES}
-        )
-        target_link_libraries(sap_http_shared PUBLIC sap_core)
-        target_compile_features(sap_http_shared PUBLIC cxx_std_20)
-        
-        if(WIN32)
-            target_link_libraries(sap_http_shared PRIVATE ws2_32)
-        endif()
-        
-        set_target_properties(sap_http_shared PROPERTIES
-            OUTPUT_NAME sap_http
-            VERSION ${PROJECT_VERSION}
-            SOVERSION ${PROJECT_VERSION_MAJOR}
-        )
-    endif()
-    
-    # Static library with modules
-    if(SAP_HTTP_BUILD_STATIC)
-        add_library(sap_http_static STATIC)
-        target_sources(sap_http_static
-            PUBLIC
-                FILE_SET CXX_MODULES FILES ${HTTP_MODULES}
-        )
-        target_link_libraries(sap_http_static PUBLIC sap_core)
-        target_compile_features(sap_http_static PUBLIC cxx_std_20)
-        
-        if(WIN32)
-            target_link_libraries(sap_http_static PRIVATE ws2_32)
-        endif()
-        
-        set_target_properties(sap_http_static PROPERTIES
-            OUTPUT_NAME sap_http
-            ARCHIVE_OUTPUT_NAME sap_http_static
-        )
-    endif()
-else()
-    # Traditional header-based build
-    
-    # Shared library without modules
+# Shared library
     if(SAP_HTTP_BUILD_SHARED)
         add_library(sap_http_shared SHARED ${HTTP_SOURCES})
         target_include_directories(sap_http_shared
@@ -119,7 +53,7 @@ else()
         )
     endif()
     
-    # Static library without modules
+# Static library
     if(SAP_HTTP_BUILD_STATIC)
         add_library(sap_http_static STATIC ${HTTP_SOURCES})
         target_include_directories(sap_http_static
@@ -138,7 +72,6 @@ else()
             ARCHIVE_OUTPUT_NAME sap_http_static
         )
     endif()
-endif()
 
 if(SAP_HTTP_BUILD_SHARED)
     add_library(sap::http ALIAS sap_http_shared)
@@ -164,7 +97,6 @@ if(SAP_HTTP_BUILD_TESTS)
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/request_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/response_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/client_tests.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/server_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration_tests.cpp
     )
 
@@ -186,29 +118,7 @@ endif()
 if(SAP_HTTP_INSTALL)
     include(GNUInstallDirs)
     
-    if(SAP_HTTP_USE_MODULES)
-        # Install module-based targets
-        if(SAP_HTTP_BUILD_SHARED)
-            install(TARGETS sap_http_shared sap_core
-                EXPORT sap_http_shared_targets
-                FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            )
-        endif()
-        
-        if(SAP_HTTP_BUILD_STATIC)
-            install(TARGETS sap_http_static sap_core
-                EXPORT sap_http_static_targets
-                FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            )
-        endif()
-    else()
-        # Install header-based targets
+    # Install targets
         if(SAP_HTTP_BUILD_SHARED)
             install(TARGETS sap_http_shared
                 EXPORT sap_http_shared_targets
@@ -241,6 +151,7 @@ if(SAP_HTTP_INSTALL)
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
         )
     endif()
+
     if(SAP_HTTP_BUILD_STATIC)
         install(EXPORT sap_http_shared_targets
             FILE sap_http_targets.cmake
@@ -268,12 +179,10 @@ if(SAP_HTTP_INSTALL)
         "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
     )
-endif()
 
 message(STATUS "")
 message(STATUS "sap_http Configuration Summary:")
 message(STATUS "  Version: ${PROJECT_VERSION}")
-message(STATUS "  Use C++20 Modules: ${SAP_HTTP_USE_MODULES}")
 message(STATUS "  Build shared library: ${SAP_HTTP_BUILD_SHARED}")
 message(STATUS "  Build static library: ${SAP_HTTP_BUILD_STATIC}")
 message(STATUS "  Build tests: ${SAP_HTTP_BUILD_TESTS}")
