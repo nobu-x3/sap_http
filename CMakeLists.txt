@@ -33,45 +33,45 @@ set(HTTP_SOURCES
 )
 
 # Shared library
-    if(SAP_HTTP_BUILD_SHARED)
-        add_library(sap_http_shared SHARED ${HTTP_SOURCES})
-        target_include_directories(sap_http_shared
-            PUBLIC
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                $<INSTALL_INTERFACE:include>
-        )
-        target_compile_features(sap_http_shared PUBLIC cxx_std_20)
-        
-        if(WIN32)
-            target_link_libraries(sap_http_shared PRIVATE ws2_32)
-        endif()
-        
-        set_target_properties(sap_http_shared PROPERTIES
-            OUTPUT_NAME sap_http
-            VERSION ${PROJECT_VERSION}
-            SOVERSION ${PROJECT_VERSION_MAJOR}
-        )
+if(SAP_HTTP_BUILD_SHARED)
+    add_library(sap_http_shared SHARED ${HTTP_SOURCES})
+    target_include_directories(sap_http_shared
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
+    target_compile_features(sap_http_shared PUBLIC cxx_std_20)
+
+    if(WIN32)
+        target_link_libraries(sap_http_shared PRIVATE ws2_32)
     endif()
-    
+
+    set_target_properties(sap_http_shared PROPERTIES
+        OUTPUT_NAME sap_http
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+    )
+endif()
+
 # Static library
-    if(SAP_HTTP_BUILD_STATIC)
-        add_library(sap_http_static STATIC ${HTTP_SOURCES})
-        target_include_directories(sap_http_static
-            PUBLIC
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                $<INSTALL_INTERFACE:include>
-        )
-        target_compile_features(sap_http_static PUBLIC cxx_std_20)
-        
-        if(WIN32)
-            target_link_libraries(sap_http_static PRIVATE ws2_32)
-        endif()
-        
-        set_target_properties(sap_http_static PROPERTIES
-            OUTPUT_NAME sap_http
-            ARCHIVE_OUTPUT_NAME sap_http_static
-        )
+if(SAP_HTTP_BUILD_STATIC)
+    add_library(sap_http_static STATIC ${HTTP_SOURCES})
+    target_include_directories(sap_http_static
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
+    target_compile_features(sap_http_static PUBLIC cxx_std_20)
+
+    if(WIN32)
+        target_link_libraries(sap_http_static PRIVATE ws2_32)
     endif()
+
+    set_target_properties(sap_http_static PROPERTIES
+        OUTPUT_NAME sap_http
+        ARCHIVE_OUTPUT_NAME sap_http_static
+    )
+endif()
 
 if(SAP_HTTP_BUILD_SHARED)
     add_library(sap::http ALIAS sap_http_shared)
@@ -81,7 +81,7 @@ endif()
 
 if(SAP_HTTP_BUILD_TESTS)
     enable_testing()
-    
+
     include(FetchContent)
     FetchContent_Declare(
         googletest
@@ -90,7 +90,7 @@ if(SAP_HTTP_BUILD_TESTS)
     )
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
-    
+
     add_executable(sap_http_tests
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/url_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/headers_tests.cpp
@@ -105,80 +105,80 @@ if(SAP_HTTP_BUILD_TESTS)
     else()
         target_link_libraries(sap_http_tests PRIVATE sap_http_shared)
     endif()
-    
-    target_link_libraries(sap_http_tests PRIVATE 
+
+    target_link_libraries(sap_http_tests PRIVATE
         GTest::gtest_main
         GTest::gmock
     )
-    
+
     include(GoogleTest)
     gtest_discover_tests(sap_http_tests)
 endif()
 
 if(SAP_HTTP_INSTALL)
     include(GNUInstallDirs)
-    
+
     # Install targets
-        if(SAP_HTTP_BUILD_SHARED)
-            install(TARGETS sap_http_shared
-                EXPORT sap_http_shared_targets
-                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            )
-        endif()
-        
-        if(SAP_HTTP_BUILD_STATIC)
-            install(TARGETS sap_http_static
-                EXPORT sap_http_static_targets
-                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            )
-        endif()
-        
-        # Install headers
-        install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        )
-    endif()
-    
-    # Install export
     if(SAP_HTTP_BUILD_SHARED)
-        install(EXPORT sap_http_static_targets
-            FILE sap_http_targets.cmake
-            NAMESPACE sap::
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
+        install(TARGETS sap_http_shared
+            EXPORT sap_http_shared_targets
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         )
     endif()
 
     if(SAP_HTTP_BUILD_STATIC)
-        install(EXPORT sap_http_shared_targets
-            FILE sap_http_targets.cmake
-            NAMESPACE sap::
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
+        install(TARGETS sap_http_static
+            EXPORT sap_http_static_targets
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         )
     endif()
-    
-    # Create and install config file
-    include(CMakePackageConfigHelpers)
-    write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
-        VERSION ${PROJECT_VERSION}
-        COMPATIBILITY AnyNewerVersion
+
+    # Install headers
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
-    
-    configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/sap_http_config.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config.cmake"
-        @ONLY
-    )
-    
-    install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
+endif()
+
+# Install export
+if(SAP_HTTP_BUILD_SHARED)
+    install(EXPORT sap_http_static_targets
+        FILE sap_http_targets.cmake
+        NAMESPACE sap::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
     )
+endif()
+
+if(SAP_HTTP_BUILD_STATIC)
+    install(EXPORT sap_http_shared_targets
+        FILE sap_http_targets.cmake
+        NAMESPACE sap::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
+    )
+endif()
+
+# Create and install config file
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/sap_http_config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config.cmake"
+    @ONLY
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
+)
 
 message(STATUS "")
 message(STATUS "sap_http Configuration Summary:")
