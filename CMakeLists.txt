@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.15)
 project(sap_http VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -30,6 +30,7 @@ set(HTTP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/request.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/client.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/response.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/server.cpp
 )
 
 # Shared library
@@ -37,10 +38,9 @@ if(SAP_HTTP_BUILD_SHARED)
     add_library(sap_http_shared SHARED ${HTTP_SOURCES})
     target_include_directories(sap_http_shared
         PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
     )
-    target_compile_features(sap_http_shared PUBLIC cxx_std_20)
 
     if(WIN32)
         target_link_libraries(sap_http_shared PRIVATE ws2_32)
@@ -58,10 +58,9 @@ if(SAP_HTTP_BUILD_STATIC)
     add_library(sap_http_static STATIC ${HTTP_SOURCES})
     target_include_directories(sap_http_static
         PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
     )
-    target_compile_features(sap_http_static PUBLIC cxx_std_20)
 
     if(WIN32)
         target_link_libraries(sap_http_static PRIVATE ws2_32)
@@ -73,12 +72,14 @@ if(SAP_HTTP_BUILD_STATIC)
     )
 endif()
 
+# Create alias
 if(SAP_HTTP_BUILD_SHARED)
     add_library(sap::http ALIAS sap_http_shared)
 elseif(SAP_HTTP_BUILD_STATIC)
     add_library(sap::http ALIAS sap_http_static)
 endif()
 
+# Tests
 if(SAP_HTTP_BUILD_TESTS)
     enable_testing()
 
@@ -97,6 +98,7 @@ if(SAP_HTTP_BUILD_TESTS)
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/request_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/response_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/client_tests.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/server_tests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration_tests.cpp
     )
 
@@ -115,13 +117,14 @@ if(SAP_HTTP_BUILD_TESTS)
     gtest_discover_tests(sap_http_tests)
 endif()
 
+# Installation
 if(SAP_HTTP_INSTALL)
     include(GNUInstallDirs)
 
     # Install targets
     if(SAP_HTTP_BUILD_SHARED)
         install(TARGETS sap_http_shared
-            EXPORT sap_http_shared_targets
+            EXPORT sap_http_targets
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -130,7 +133,7 @@ if(SAP_HTTP_INSTALL)
 
     if(SAP_HTTP_BUILD_STATIC)
         install(TARGETS sap_http_static
-            EXPORT sap_http_static_targets
+            EXPORT sap_http_targets
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -141,48 +144,40 @@ if(SAP_HTTP_INSTALL)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
-endif()
 
-# Install export
-if(SAP_HTTP_BUILD_SHARED)
-    install(EXPORT sap_http_static_targets
+    # Install export (only once, regardless of shared/static)
+    install(EXPORT sap_http_targets
         FILE sap_http_targets.cmake
         NAMESPACE sap::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
     )
-endif()
 
-if(SAP_HTTP_BUILD_STATIC)
-    install(EXPORT sap_http_shared_targets
-        FILE sap_http_targets.cmake
-        NAMESPACE sap::
+    # Create and install config file
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY AnyNewerVersion
+    )
+
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/sap_http_config.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config.cmake"
+        @ONLY
+    )
+
+    install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
     )
 endif()
 
-# Create and install config file
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
-)
-
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/sap_http_config.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config.cmake"
-    @ONLY
-)
-
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/sap_http_config_version.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sap_http
-)
-
+# Configuration summary
 message(STATUS "")
 message(STATUS "sap_http Configuration Summary:")
 message(STATUS "  Version: ${PROJECT_VERSION}")
+message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Build shared library: ${SAP_HTTP_BUILD_SHARED}")
 message(STATUS "  Build static library: ${SAP_HTTP_BUILD_STATIC}")
 message(STATUS "  Build tests: ${SAP_HTTP_BUILD_TESTS}")
