@@ -1,6 +1,19 @@
 #include "net/http.h"
 
 namespace http {
+
+URL URL::from_path(std::string_view path_and_query) {
+  URL u;
+  auto query_pos = path_and_query.find('?');
+  if (query_pos != std::string_view::npos) {
+    u.path = path_and_query.substr(0, query_pos);
+    u.query = path_and_query.substr(query_pos);
+  } else {
+    u.path = path_and_query;
+  }
+  return u;
+}
+
 stl::result<URL> URL::parse(std::string_view raw_url) {
   URL u;
   size_t pos = 0;

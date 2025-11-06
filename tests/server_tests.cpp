@@ -9,7 +9,7 @@ TEST(ServerTest, CreateServer) {
 
 TEST(ServerTest, AddRoute) {
   http::Server server;
-  server.route("/test", http::EMethod::GET, [](const http::ServerRequest &req) {
+  server.route("/test", http::EMethod::GET, [](const http::Request &req) {
     return http::Response(200, "Test response");
   });
   SUCCEED();
@@ -18,7 +18,7 @@ TEST(ServerTest, AddRoute) {
 TEST(ServerTest, RouteHandlerWithJSON) {
   http::Server server;
   server.route("/api/data", http::EMethod::POST,
-               [](const http::ServerRequest &req) {
+               [](const http::Request &req) {
                  // Simulate JSON processing
                  if (req.headers.get("Content-Type") == "application/json") {
                    return http::Response(201, R"({"status": "created"})");
@@ -31,15 +31,15 @@ TEST(ServerTest, RouteHandlerWithJSON) {
 
 TEST(ServerTest, MultipleRoutes) {
   http::Server server;
-  server.route("/", http::EMethod::GET, [](const http::ServerRequest &) {
+  server.route("/", http::EMethod::GET, [](const http::Request &) {
     return http::Response(200, "Home");
   });
   server.route("/api/users", http::EMethod::GET,
-               [](const http::ServerRequest &) {
+               [](const http::Request &) {
                  return http::Response(200, R"([{"id": 1, "name": "John"}])");
                });
   server.route("/api/users", http::EMethod::POST,
-               [](const http::ServerRequest &req) {
+               [](const http::Request &req) {
                  return http::Response(201, "User created");
                });
   SUCCEED();

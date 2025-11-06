@@ -50,7 +50,7 @@ TEST(IntegrationTest, HttpBinHeaders) {
 TEST(IntegrationTest, ServerClientIntegration) {
   http::ServerConfig cfg{-1, 9999};
   http::Server server{std::move(cfg)};
-  server.route("/test", http::EMethod::GET, [](const http::ServerRequest &) {
+  server.route("/test", http::EMethod::GET, [](const http::Request &) {
     return http::Response(200, "Integration test response");
   });
   auto start_result = server.start();
@@ -72,7 +72,7 @@ TEST(IntegrationTest, ServerPostRequest) {
   http::ServerConfig cfg{-1, 10000};
   http::Server server{std::move(cfg)};
   server.route("/api/echo", http::EMethod::POST,
-               [](const http::ServerRequest &req) {
+               [](const http::Request &req) {
                  http::Response resp(200, req.body);
                  resp.headers.set("Content-Type", "application/json");
                  return resp;

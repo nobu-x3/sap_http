@@ -15,26 +15,24 @@
 
 namespace http {
 
-static stl::result<ServerRequest>
-parse_request(const std::string &raw_request) {
+// Parse incoming request and create a Request object
+static stl::result<Request> parse_request(const std::string &raw_request) {
   std::istringstream stream(raw_request);
   std::string line;
   if (!std::getline(stream, line)) {
-    return stl::make_error<ServerRequest>("Empty request");
+    return stl::make_error<Request>("Empty request");
   }
+
   std::istringstream first_line(line);
   std::string method_str, path_str, version;
   first_line >> method_str >> path_str >> version;
+
   auto method = string_to_method(method_str);
-  std::string path = path_str;
-  std::string query;
-  auto query_pos = path_str.find('?');
-  if (query_pos != std::string::npos) {
-    path = path_str.substr(0, query_pos);
-    query = path_str.substr(query_pos + 1);
-  }
-  ServerRequest req(method, path);
-  req.query = query;
+
+  // Create Request with URL containing just path and query
+  Request req(method, URL::from_path(path_str));
+
+  // Parse headers
   while (std::getline(stream, line) && line != "\r" && !line.empty()) {
     if (line.back() == '\r')
       line.pop_back();
@@ -47,6 +45,8 @@ parse_request(const std::string &raw_request) {
       req.headers.set(key, value);
     }
   }
+
+  // Parse body
   std::string body_content;
   std::string body_line;
   while (std::getline(stream, body_line)) {
@@ -56,6 +56,7 @@ parse_request(const std::string &raw_request) {
     body_content.pop_back();
   }
   req.body = body_content;
+
   return req;
 }
 
@@ -117,8 +118,9 @@ void Server::handle_client(i32 client_socket) {
     Response resp(404, "Not Found");
     if (req_result) {
       auto &req = req_result.value();
+      // Find matching route using URL path
       for (const auto &route : m_Routes) {
-        if (route.method == req.method && route.path == req.path) {
+        if (route.method == req.method && route.path == req.url.path) {
           try {
             resp = route.handler(req);
           } catch (const std::exception &e) {
@@ -240,4 +242,5 @@ void Server::stop() {
     m_Config.server_socket = -1;
   }
 }
+
 } // namespace http

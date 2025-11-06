@@ -61,6 +61,7 @@ struct URL {
 
   static stl::result<URL> parse(std::string_view raw_url);
   std::string full_path() const { return path + query; }
+  static URL from_path(std::string_view path_and_query);
 };
 
 struct Headers {
@@ -78,7 +79,12 @@ struct Request {
   std::string body;
   std::chrono::milliseconds timeout{30000};
 
+  // Optional: route params extracted by server routing (e.g., /users/:id)
+  std::map<std::string, std::string> params;
+
+  Request() = default;
   Request(http::EMethod m, http::URL u);
+
   void set_header(std::string_view key, std::string_view value);
   void set_body(std::string data);
 };
@@ -109,20 +115,7 @@ public:
                                                  std::string body);
 };
 
-class ServerRequest {
-public:
-  EMethod method;
-  std::string path;
-  std::string query;
-  Headers headers;
-  std::string body;
-  std::map<std::string, std::string> params;
-
-  inline ServerRequest(EMethod m, std::string p)
-      : method(m), path(std::move(p)) {}
-};
-
-using RouteHandler = std::function<Response(const ServerRequest &)>;
+using RouteHandler = std::function<Response(const Request &)>;
 
 struct Route {
   std::string path;
