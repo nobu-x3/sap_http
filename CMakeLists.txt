@@ -15,11 +15,6 @@ if(WIN32)
     add_compile_definitions(_WIN32_WINNT=0x0601)
 endif()
 
-set(CORE_HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/core/types.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/core/result.h
-)
-
 set(HTTP_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/include/net/http.h
 )
@@ -39,6 +34,8 @@ if(SAP_HTTP_BUILD_SHARED)
     target_include_directories(sap_http_shared
         PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sap_core/include>
+            $<INSTALL_INTERFACE:sap_core/include>
             $<INSTALL_INTERFACE:include>
     )
 
@@ -59,6 +56,8 @@ if(SAP_HTTP_BUILD_STATIC)
     target_include_directories(sap_http_static
         PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sap_core/include>
+            $<INSTALL_INTERFACE:sap_core/include>
             $<INSTALL_INTERFACE:include>
     )
 

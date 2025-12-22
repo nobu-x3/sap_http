@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/result.h"
-#include "core/types.h"
+#include "result.h"
+#include "types.h"
 #include <algorithm>
 #include <chrono>
 #include <future>
